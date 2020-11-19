@@ -9,7 +9,7 @@ RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/inst
 
 FROM builder as build
 # Build stage
-
+USER root:root
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
