@@ -13,9 +13,19 @@
     "posttest": "npm run lint",
     "start": "node build/index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "minecraft",
+    "telegram",
+    "bot"
+  ],
+  "author": {
+    "name": "MrMarble",
+    "url": "https://mrmarble.dev"
+  },
+  "repository": {
+    "url": "https://github.com/MrMarble/minecraft-update-bot"
+  },
+  "license": "MIT",
   "devDependencies": {
     "@types/jsdom": "^16.2.5",
     "@types/node": "^14.11.2",
