@@ -19,6 +19,7 @@
   "devDependencies": {
     "@types/jsdom": "^16.2.5",
     "@types/node": "^14.11.2",
+    "@types/node-emoji": "^1.8.1",
     "@types/node-fetch": "^2.5.7",
     "@types/sinon": "^9.0.8",
     "gts": "^3.0.2",
@@ -32,6 +33,7 @@
     "dayjs": "^1.9.6",
     "dotenv": "^8.2.0",
     "jsdom": "^16.4.0",
+    "node-emoji": "^1.10.0",
     "node-fetch": "^2.6.1"
   }
 }

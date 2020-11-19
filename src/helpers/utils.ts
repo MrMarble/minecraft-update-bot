@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import {FIVE_MINUTES} from './constants';
 import {VersionManifest, VersionType} from '../types';
 import {JSDOM} from 'jsdom';
-
+import {get, emojify} from 'node-emoji';
 /**
  * Makes a GET request
  * @param url url to fetch
@@ -118,4 +118,42 @@ export function sanitize(text: string): string {
   });
   text = text.replace(/\s+/g, ' ');
   return text.trim();
+}
+
+export function emojize(text: string): string {
+  const map: {[key: string]: Array<string>} = {};
+  //map[get(':cold_face:')] = ['freezing', 'freeze'];  For some reason this code doesn't work on telegram
+  map[get(':snowflake:')] = ['snow'];
+  map[get(':mountain:')] = ['cliff', 'mountain'];
+  map[get(':goat:')] = ['goat'];
+  map[get(':crystal_ball:')] = ['crystal', 'amethyst', 'geode'];
+  map[get(':telescope:')] = ['telescope', 'spyglass', 'lens'];
+  map[get(':zap:')] = ['lightning'];
+  map[get(':fog:')] = ['textures'];
+  map[get(':bug:')] = ['bug'];
+  map[get(':gear:')] = ['technical'];
+  map[get(':arrows_clockwise:')] = ['change', 'revert'];
+
+  for (const emoji in map) {
+    if (Object.prototype.hasOwnProperty.call(map, emoji)) {
+      const tokens = map[emoji];
+      for (const token of tokens) {
+        if (text.toLowerCase().includes(token))
+          return emojify(`${emoji} ${text}`);
+      }
+    }
+  }
+  return text;
+}
+
+export function sendMessage(msg: string) {
+  fetch(`https://api.telegram.org/bot${process.env.TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      chat_id: process.env.CHAT_ID,
+      parse_mode: 'HTML',
+      text: msg,
+    }),
+  }).then(r => r.text().then(t => console.log(t)));
 }

@@ -1,13 +1,13 @@
 import {HOUR, TEN_MINUTES} from './helpers/constants';
 import {Version} from './types';
 import {config} from 'dotenv';
-import fetch from 'node-fetch';
+import {emojify} from 'node-emoji';
 import {
   formatChangelog,
   getChangelog,
   getLatestVersion,
 } from './helpers/functions';
-import {getChangelogURL} from './helpers/utils';
+import {getChangelogURL, sendMessage, sleep} from './helpers/utils';
 
 config();
 
@@ -25,33 +25,30 @@ async function checkVersion() {
       console.log('Getting changelog...');
       const changelog = await getChangelog(changelogUrl);
       const formatedLog = formatChangelog(changelog);
-      console.log(
-        `Sending changelog to https://api.telegram.org/bot${process.env.TOKEN}/sendMessage`
+      sendMessage(
+        `<a href="${changelogUrl}">${emojify(
+          ':earth_africa:'
+        ).trim()}</a>${formatedLog.trim()}`
       );
-      const r = await fetch(
-        `https://api.telegram.org/bot${process.env.TOKEN}/sendMessage`,
-        {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            chat_id: process.env.CHAT_ID,
-            parse_mode: 'HTML',
-            text: formatedLog,
-          }),
-        }
-      );
-      console.log(await r.text());
     } catch (error) {
+      console.error(error);
       console.log(
         `Seems like ${changelogUrl} is not ready yet. Waiting ${
           TEN_MINUTES / 1000
         } seconds`
       );
-      console.error(error);
-      setTimeout(checkVersion, TEN_MINUTES);
+      sendMessage(
+        [
+          'New Minecraft version available! waiting for the changelog...',
+          `\nVersion: <pre>${currVersion.id}</pre>`,
+          `Type: <pre>${currVersion.type}</pre>`,
+        ].join('\n')
+      );
+      sleep(TEN_MINUTES);
+      checkVersion();
     }
   }
-
+  console.log(`Done! waiting ${HOUR / 1000} seconds`);
   setTimeout(checkVersion, HOUR);
 }
 

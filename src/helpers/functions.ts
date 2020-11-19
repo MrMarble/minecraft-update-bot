@@ -2,7 +2,13 @@ import dayjs = require('dayjs');
 import {JSDOM} from 'jsdom';
 import {MSG_SIZE, versionManifest} from './constants';
 import {Changelog, Feature, Version, VersionManifest} from '../types';
-import {doRequest, getChangelogURL, nextUntil, sanitize} from './utils';
+import {
+  doRequest,
+  emojize,
+  getChangelogURL,
+  nextUntil,
+  sanitize,
+} from './utils';
 
 export async function getChangelog(url: string): Promise<Changelog> {
   const changelog: Changelog = [];
@@ -56,7 +62,7 @@ export function formatChangelog(cl: Changelog, max?: number): string {
   }
 
   if (msg.join('\n').length > MSG_SIZE) {
-    if (max === undefined) max = 5;
+    if (max === undefined) max = 4;
     return formatChangelog(cl, --max);
   }
   return msg.join('\n');
@@ -65,7 +71,7 @@ export function formatChangelog(cl: Changelog, max?: number): string {
 function formatFeature(feat: Feature, max?: number): Array<string> {
   const msg: Array<string> = [];
   msg.push(''); // Empty line
-  msg.push(feat.name.bold());
+  msg.push(emojize(feat.name.bold()));
   for (const change of feat.content) {
     if (max && feat.content.indexOf(change) >= max) {
       feat.content.indexOf(change) === max && msg.push('... and more!');
