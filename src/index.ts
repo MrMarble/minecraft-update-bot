@@ -40,11 +40,10 @@ async function checkVersion() {
       sendMessage(
         [
           'New Minecraft version available! waiting for the changelog...',
-          `\nVersion: <pre>${currVersion.id}</pre>`,
-          `Type: <pre>${currVersion.type}</pre>`,
+          `\n<pre>${currVersion.type} - ${currVersion.id}</pre>`,
         ].join('\n')
       );
-      sleep(TEN_MINUTES);
+      await sleep(TEN_MINUTES);
       checkVersion();
     }
   }
