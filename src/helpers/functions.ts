@@ -1,6 +1,6 @@
 import dayjs = require('dayjs');
 import {JSDOM} from 'jsdom';
-import {versionManifest} from './constants';
+import {MSG_SIZE, versionManifest} from './constants';
 import {Changelog, Feature, Version, VersionManifest} from '../types';
 import {doRequest, getChangelogURL, nextUntil, sanitize} from './utils';
 
@@ -46,6 +46,38 @@ export async function getLatestVersion(): Promise<Version> {
   };
 
   return version;
+}
+
+export function formatChangelog(cl: Changelog, max?: number): string {
+  const msg: Array<string> = [];
+  for (const feature of cl) {
+    if (feature.name.startsWith('Get the')) continue;
+    msg.push(...formatFeature(feature, max));
+  }
+
+  if (msg.join('\n').length > MSG_SIZE) {
+    if (max === undefined) max = 5;
+    return formatChangelog(cl, --max);
+  }
+  return msg.join('\n');
+}
+
+function formatFeature(feat: Feature, max?: number): Array<string> {
+  const msg: Array<string> = [];
+  msg.push(''); // Empty line
+  msg.push(feat.name.bold());
+  for (const change of feat.content) {
+    if (max && feat.content.indexOf(change) >= max) {
+      feat.content.indexOf(change) === max && msg.push('... and more!');
+      continue;
+    }
+    if (typeof change === 'string') {
+      msg.push(`- ${change}`);
+      continue;
+    }
+    msg.push(...formatFeature(change, max));
+  }
+  return msg;
 }
 
 function getListElements(preceding: Element): Array<string> | false {

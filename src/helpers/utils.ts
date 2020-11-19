@@ -1,5 +1,4 @@
 import fetch from 'node-fetch';
-import {exit} from 'process';
 import {FIVE_MINUTES} from './constants';
 import {VersionManifest, VersionType} from '../types';
 import {JSDOM} from 'jsdom';
@@ -14,8 +13,8 @@ export async function doRequest(
   tries = 3
 ): Promise<JSDOM | VersionManifest> {
   if (tries <= 0) {
-    console.error(`Error fetching ${url}.`);
-    exit(1);
+    console.error(`Error fetching ${url}. No more tries`);
+    throw new Error(`Error fetching ${url}. No more tries`);
   }
   const response = await fetch(url);
   if (!response.ok) {
@@ -35,7 +34,9 @@ export async function doRequest(
       console.error(
         `Error detecting Content-Type: ${response.headers.get('Content-Type')}`
       );
-      exit(1);
+      throw new Error(
+        `Error detecting Content-Type: ${response.headers.get('Content-Type')}`
+      );
   }
 }
 
@@ -103,9 +104,18 @@ export function nextUntil(
 }
 
 export function sanitize(text: string): string {
-  text = text.replace(/\u2019/g, "'");
-  text = text.replace(/\u201d|\u201c/g, '"');
-  text = text.replace('\n', ' ');
+  const map: {[key: string]: string} = {
+    '<': '&lt;',
+    '>': '&gt;',
+    '&': '&amp;',
+    '\n': ' ',
+    '\u2019': "'",
+    '\u201d': '"',
+    '\u201c': '"',
+  };
+  text = text.replace(/[&<>\u2019\u201d\u201c\n]/g, m => {
+    return map[m];
+  });
   text = text.replace(/\s+/g, ' ');
   return text.trim();
 }
