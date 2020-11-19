@@ -29,4 +29,4 @@ COPY --from=build /usr/src/app/build ./build
 COPY --from=build /usr/src/app/package*.json ./
 COPY --from=build /usr/src/app/node_modules ./node_modules
 
-CMD ["node", "./build/index.js"]
+CMD ["npm", "start"]

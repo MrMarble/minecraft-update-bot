@@ -5,3 +5,6 @@ dayjs.extend(duration);
 export const HOUR = dayjs.duration(1, 'hour').asMilliseconds();
 export const TEN_MINUTES = dayjs.duration(10, 'minutes').asMilliseconds();
 export const FIVE_MINUTES = dayjs.duration(5, 'minutes').asMilliseconds();
+
+export const versionManifest =
+  'https://launchermeta.mojang.com/mc/game/version_manifest.json';

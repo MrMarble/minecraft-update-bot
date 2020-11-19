@@ -1,8 +1,6 @@
 import dayjs = require('dayjs');
-import {readFile} from 'fs';
 import {JSDOM} from 'jsdom';
 import sinon = require('sinon');
-import {promisify} from 'util';
 import {suite} from 'uvu';
 import * as assert from 'uvu/assert';
 
@@ -56,16 +54,41 @@ funcs('getLatestVersion', async ctx => {
 
 funcs('getChangelog', async ctx => {
   ctx.doRequest.returns(
-    Promise.resolve(
-      new JSDOM(
-        await promisify(readFile)(`${__dirname}/fixtures/changelog.html`)
-      )
-    )
+    JSDOM.fromFile(`${__dirname}/fixtures/changelog.html`, {
+      contentType: 'text/html;charset=utf-8',
+    })
   );
+
+  const expected: Changelog = [
+    {
+      name: 'New Features in 20w46a',
+      content: [
+        {
+          name: 'Powder Snow',
+          content: [
+            'Powder Snow is a trap block that causes any entity that walks into it to sink in it',
+            'You can pick up and place powder snow with a bucket',
+          ],
+        },
+        {
+          name: 'Freezing',
+          content: ['Standing in powder snow will slowly freeze an entity'],
+        },
+      ],
+    },
+    {
+      name: 'Fixed bugs in 20w46a',
+      content: [
+        'MC-2490 - TNT animation ends at 80 ticks, ignores fuse length changes',
+        "MC-53518 - Endermen don't attack endermites spawned using spawn eggs or /summon",
+      ],
+    },
+  ];
 
   assert.type(getChangelog, 'function');
   const result: Changelog = await getChangelog('');
-  assert.equal(result.length, 6);
+  assert.is(result.length, 2);
+  assert.equal(result, expected);
   assert.equal(ctx.doRequest.callCount, 1);
 });
 

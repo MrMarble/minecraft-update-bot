@@ -12,12 +12,9 @@ export interface Version {
   time: Dayjs;
 }
 
-export interface Change {
-  [key: string]: Array<string>;
-}
-
 export interface Feature {
-  [key: string]: Array<Change | string>;
+  name: string;
+  content: Array<Feature | string>;
 }
 
 export type Changelog = Array<Feature>;

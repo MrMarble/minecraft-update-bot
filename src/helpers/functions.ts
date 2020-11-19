@@ -1,8 +1,8 @@
 import dayjs = require('dayjs');
 import {JSDOM} from 'jsdom';
-import {versionManifest} from '..';
-import {Change, Changelog, Feature, Version, VersionManifest} from '../types';
-import {doRequest, getChangelogURL, nextUntil} from './utils';
+import {versionManifest} from './constants';
+import {Changelog, Feature, Version, VersionManifest} from '../types';
+import {doRequest, getChangelogURL, nextUntil, sanitize} from './utils';
 
 export async function getChangelog(url: string): Promise<Changelog> {
   const changelog: Changelog = [];
@@ -12,27 +12,25 @@ export async function getChangelog(url: string): Promise<Changelog> {
 
   features.forEach(element => {
     if (element.textContent) {
-      const feat: Feature = {};
       const headers = nextUntil(element, 'h1', 'h2,h3');
-      let changes: Array<Change | string> = [];
+      let changes: Array<Feature | string> = [];
       if (headers.length > 0) {
-        changes = headers.map(e => {
-          const head: Change = {};
-          const elements = getListElements(e);
-          if (elements !== false && e.textContent) {
-            head[e.textContent.trim()] = elements;
-          }
-          return head;
-        });
+        changes = headers
+          .map(e => {
+            const elements = getListElements(e);
+            if (elements !== false && e.textContent) {
+              return {name: sanitize(e.textContent), content: elements};
+            }
+            return undefined;
+          })
+          .filter(e => e !== undefined) as Array<Feature>;
       } else {
         const elements = getListElements(element);
-        if (elements !== false && element.textContent) {
+        if (elements !== false && sanitize(element.textContent)) {
           changes = elements;
         }
       }
-
-      feat[element.textContent.trim()] = changes;
-      changelog.push(feat);
+      changelog.push({name: sanitize(element.textContent), content: changes});
     }
   });
   return changelog;
@@ -57,6 +55,6 @@ function getListElements(preceding: Element): Array<string> | false {
   }
   const items = elements[0].querySelectorAll('li');
   const data: Array<string> = [];
-  items.forEach(el => el.textContent && data.push(el.textContent.trim()));
+  items.forEach(el => el.textContent && data.push(sanitize(el.textContent)));
   return data;
 }

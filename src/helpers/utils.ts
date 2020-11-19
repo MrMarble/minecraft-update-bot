@@ -28,7 +28,9 @@ export async function doRequest(
     case 'application/json':
       return response.json();
     case 'text/html;charset=utf-8':
-      return new JSDOM(await response.text());
+      return new JSDOM(await response.text(), {
+        contentType: 'text/html;charset=utf-8',
+      });
     default:
       console.error(
         `Error detecting Content-Type: ${response.headers.get('Content-Type')}`
@@ -98,4 +100,12 @@ export function nextUntil(
   }
 
   return siblings;
+}
+
+export function sanitize(text: string): string {
+  text = text.replace(/\u2019/g, "'");
+  text = text.replace(/\u201d|\u201c/g, '"');
+  text = text.replace('\n', ' ');
+  text = text.replace(/\s+/g, ' ');
+  return text.trim();
 }
