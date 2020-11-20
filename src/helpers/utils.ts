@@ -131,6 +131,10 @@ export function emojize(text: string): string {
   map[get(':goat:')] = ['goat'];
   map[get(':crystal_ball:')] = ['crystal', 'amethyst', 'geode'];
   map[get(':telescope:')] = ['telescope', 'spyglass', 'lens'];
+  map[get(':candle:')] = ['candle'];
+  map[get(':moneybag:')] = ['bundle'];
+  map[get(':squid:')] = ['squid'];
+  map[get(':busts_in_silhouette:')] = ['ui', 'ux'];
   map[get(':zap:')] = ['lightning'];
   map[get(':fog:')] = ['textures'];
   map[get(':bug:')] = ['bug'];
