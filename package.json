@@ -11,7 +11,7 @@
     "fix": "gts fix",
     "pretest": "npm run compile",
     "posttest": "npm run lint",
-    "start": "node build/index.js"
+    "start": "NODE_PATH=. node build/index.js"
   },
   "keywords": [
     "minecraft",

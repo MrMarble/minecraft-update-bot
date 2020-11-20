@@ -3,3 +3,4 @@ node_modules
 build
 .devcontainer
 .env
+latest_version.json

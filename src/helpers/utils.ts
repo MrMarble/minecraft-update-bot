@@ -1,8 +1,11 @@
 import fetch from 'node-fetch';
 import {FIVE_MINUTES} from './constants';
-import {VersionManifest, VersionType} from '../types';
+import {Version, VersionManifest, VersionType} from '../types';
 import {JSDOM} from 'jsdom';
 import {get, emojify} from 'node-emoji';
+import {readFile, writeFile} from 'fs';
+import {promisify} from 'util';
+
 /**
  * Makes a GET request
  * @param url url to fetch
@@ -156,4 +159,18 @@ export function sendMessage(msg: string) {
       text: msg,
     }),
   }).then(r => r.text().then(t => console.log(t)));
+}
+
+export async function readVersionFromFile(
+  path: string
+): Promise<object | Version> {
+  try {
+    return JSON.parse((await promisify(readFile)(path)).toString());
+  } catch (error) {
+    return {};
+  }
+}
+
+export async function writeVersionToFile(version: Version, path: string) {
+  await promisify(writeFile)(path, JSON.stringify(version));
 }

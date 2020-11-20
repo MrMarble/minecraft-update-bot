@@ -7,11 +7,24 @@ import {
   getChangelog,
   getLatestVersion,
 } from './helpers/functions';
-import {getChangelogURL, sendMessage, sleep} from './helpers/utils';
+import {
+  getChangelogURL,
+  readVersionFromFile,
+  sendMessage,
+  sleep,
+  writeVersionToFile,
+} from './helpers/utils';
 
 config();
 
 let latestVersion: Version;
+const versionPath = `${process.env.NODE_PATH}/latest_version.json`;
+
+async function main() {
+  latestVersion = (await readVersionFromFile(versionPath)) as Version;
+
+  checkVersion();
+}
 
 async function checkVersion() {
   console.log('Checking latest version...');
@@ -20,6 +33,7 @@ async function checkVersion() {
   if (currVersion?.id !== latestVersion?.id) {
     console.log(`New version available! ${currVersion.id}`);
     latestVersion = currVersion;
+    writeVersionToFile(latestVersion, versionPath);
     const changelogUrl = getChangelogURL(latestVersion.type, latestVersion.id);
     try {
       console.log('Getting changelog...');
@@ -53,4 +67,4 @@ async function checkVersion() {
 
 console.info('Starting Minecraft bot...');
 
-checkVersion();
+main();
