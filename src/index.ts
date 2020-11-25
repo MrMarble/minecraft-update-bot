@@ -32,8 +32,6 @@ async function checkVersion() {
 
   if (currVersion?.id !== latestVersion?.id) {
     console.log(`New version available! ${currVersion.id}`);
-    latestVersion = currVersion;
-    writeVersionToFile(latestVersion, versionPath);
     const changelogUrl = getChangelogURL(latestVersion.type, latestVersion.id);
     try {
       console.log('Getting changelog...');
@@ -44,6 +42,9 @@ async function checkVersion() {
           ':earth_africa:'
         ).trim()}</a>${formatedLog.trim()}`
       );
+      // Refresh version if everything is ok.
+      latestVersion = currVersion;
+      writeVersionToFile(latestVersion, versionPath);
     } catch (error) {
       console.error(error);
       console.log(
