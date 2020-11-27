@@ -8,17 +8,17 @@ import {getChangelog, getLatestVersion} from '../src/helpers/functions';
 import * as utils from '../src/helpers/utils';
 import {Version, VersionManifest, VersionType, Changelog} from '../src/types';
 
-const funcs = suite('Functions');
+const getLatestVersionSuite = suite('getLatestVersion');
 
-funcs.before.each(ctx => {
+getLatestVersionSuite.before.each(ctx => {
   ctx.doRequest = sinon.stub(utils, 'doRequest');
 });
 
-funcs.after.each(ctx => {
+getLatestVersionSuite.after.each(ctx => {
   ctx.doRequest.restore();
 });
 
-funcs('getLatestVersion', async ctx => {
+getLatestVersionSuite('Should return Version', async ctx => {
   const fakeManifest: VersionManifest = {
     latest: {
       release: '1.16.4',
@@ -52,7 +52,23 @@ funcs('getLatestVersion', async ctx => {
   assert.equal(result, expected);
 });
 
-funcs('getChangelog', async ctx => {
+getLatestVersionSuite.run();
+
+const getChangelogSuite = suite('getChangelog');
+
+getChangelogSuite.before.each(ctx => {
+  ctx.doRequest = sinon.stub(utils, 'doRequest');
+  ctx.fakeVersion = {
+    type: VersionType.Snapshot,
+    id: '',
+  } as Version;
+});
+
+getChangelogSuite.after.each(ctx => {
+  ctx.doRequest.restore();
+});
+
+getChangelogSuite('Should return ChangeLog', async ctx => {
   ctx.doRequest.returns(
     JSDOM.fromFile(`${__dirname}/fixtures/changelog.html`, {
       contentType: 'text/html;charset=utf-8',
@@ -84,12 +100,24 @@ funcs('getChangelog', async ctx => {
       ],
     },
   ];
-
   assert.type(getChangelog, 'function');
-  const result: Changelog = await getChangelog('');
+
+  const result: Changelog = await getChangelog(ctx.fakeVersion);
   assert.is(result.length, 2);
   assert.equal(result, expected);
   assert.equal(ctx.doRequest.callCount, 1);
 });
 
-funcs.run();
+getChangelogSuite('Should return empty array', async ctx => {
+  ctx.doRequest.returns(false);
+
+  const expected = [];
+  assert.type(getChangelog, 'function');
+
+  const result: Changelog = await getChangelog(ctx.fakeVersion);
+  assert.is(result.length, 0);
+  assert.equal(result, expected);
+  assert.equal(ctx.doRequest.callCount, 1);
+});
+
+getChangelogSuite.run();
