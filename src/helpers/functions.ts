@@ -1,18 +1,37 @@
 import dayjs = require('dayjs');
 import {JSDOM} from 'jsdom';
-import {MSG_SIZE, versionManifest} from './constants';
+import {
+  HOUR,
+  MSG_SIZE,
+  TEN_MINUTES,
+  versionFile,
+  versionManifest,
+} from './constants';
 import {Changelog, Feature, Version, VersionManifest} from '../types';
 import {
   doRequest,
   emojize,
   getChangelogURL,
   nextUntil,
+  readVersionFromFile,
   sanitize,
+  sendMessage,
+  sleep,
+  writeVersionToFile,
 } from './utils';
+import {emojify} from 'node-emoji';
 
-export async function getChangelog(url: string): Promise<Changelog> {
+export async function getChangelog({id, type}: Version): Promise<Changelog> {
   const changelog: Changelog = [];
-  const {document} = ((await doRequest(url)) as JSDOM).window;
+
+  const dom = (await doRequest(getChangelogURL({type, id} as Version))) as
+    | JSDOM
+    | false;
+  if (dom === false) {
+    return changelog;
+  }
+
+  const {document} = dom.window;
 
   const features = document.querySelectorAll('.article-paragraph h1');
 
@@ -48,7 +67,10 @@ export async function getLatestVersion(): Promise<Version> {
     type: json.versions[0].type,
     id: json.versions[0].id,
     time: dayjs(json.versions[0].releaseTime),
-    changelogURL: getChangelogURL(json.versions[0].type, json.versions[0].id),
+    changelogURL: getChangelogURL({
+      type: json.versions[0].type,
+      id: json.versions[0].id,
+    } as Version),
   };
 
   return version;
@@ -66,6 +88,56 @@ export function formatChangelog(cl: Changelog, max?: number): string {
     return formatChangelog(cl, --max);
   }
   return msg.join('\n');
+}
+
+export async function loop() {
+  let latestVersion = (await readVersionFromFile(versionFile)) as Version;
+  let oscilationTime = 0; // Don't wait on first execution.
+
+  let changelogTries = 3;
+
+  for (;;) {
+    await sleep(oscilationTime);
+
+    const currentVersion = await getLatestVersion();
+
+    // If there is no new version do nothing
+    if (latestVersion?.id === currentVersion?.id) {
+      oscilationTime = HOUR;
+      continue;
+    }
+
+    console.log(`New Minecraft version ${currentVersion.id} available.`);
+
+    const changeLog = await getChangelog(currentVersion);
+
+    // If changelog is not yet available
+    if (changeLog?.length === 0 && changelogTries > 0) {
+      console.log(`Changelog for ${currentVersion.id} is not available yet.`);
+      oscilationTime = TEN_MINUTES;
+      changelogTries--;
+      continue;
+    }
+
+    // Seems like this version does not have a changelog (yet)
+    if (0 === changelogTries) {
+      console.log('Someone is taking his time to make the changelog...');
+      oscilationTime = HOUR;
+      changelogTries = 3;
+      continue;
+    }
+
+    sendMessage(
+      `<a href="${getChangelogURL(currentVersion)}">${emojify(
+        ':earth_africa:'
+      ).trim()}</a>${formatChangelog(changeLog).trim()}`
+    );
+
+    latestVersion = currentVersion;
+    writeVersionToFile(latestVersion, versionFile);
+    oscilationTime = HOUR;
+    console.log('Message sent, restarting loop');
+  }
 }
 
 function formatFeature(feat: Feature, max?: number): Array<string> {

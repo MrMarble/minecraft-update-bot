@@ -14,10 +14,10 @@ import {promisify} from 'util';
 export async function doRequest(
   url: string,
   tries = 3
-): Promise<JSDOM | VersionManifest> {
+): Promise<JSDOM | VersionManifest | false> {
   if (tries <= 0) {
     console.error(`Error fetching ${url}. No more tries`);
-    throw new Error(`Error fetching ${url}. No more tries`);
+    return false;
   }
   const response = await fetch(url);
   if (!response.ok) {
@@ -37,9 +37,7 @@ export async function doRequest(
       console.error(
         `Error detecting Content-Type: ${response.headers.get('Content-Type')}`
       );
-      throw new Error(
-        `Error detecting Content-Type: ${response.headers.get('Content-Type')}`
-      );
+      return false;
   }
 }
 
@@ -56,7 +54,7 @@ export function sleep(ms: number) {
  * @param type Type of the release
  * @param id Name of the release
  */
-export function getChangelogURL(type: VersionType, id: string): string {
+export function getChangelogURL({type, id}: Version): string {
   const baseURL = 'https://www.minecraft.net/en-us/article/minecraft';
   let _type = type.toString();
   if (type === VersionType.Release) {

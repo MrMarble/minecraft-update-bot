@@ -10,3 +10,5 @@ export const versionManifest =
   'https://launchermeta.mojang.com/mc/game/version_manifest.json';
 
 export const MSG_SIZE = 4096;
+
+export const versionFile = `${process.env.NODE_PATH}/latest_version.json`;
