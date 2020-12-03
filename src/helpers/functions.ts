@@ -13,6 +13,7 @@ import {emojify} from 'node-emoji';
 import {sleep} from './helpers';
 
 export async function loop(exitCondition?: () => boolean) {
+  console.log('Loop started');
   let latestVersion = (await readVersionFromFile(versionFile)) as Version;
   let oscilationTime = 0; // Don't wait on first execution.
 
@@ -64,4 +65,8 @@ export async function loop(exitCondition?: () => boolean) {
     oscilationTime = HOUR;
     console.log('Message sent, restarting loop');
   }
+}
+
+if (process.env?.FORK) {
+  loop();
 }

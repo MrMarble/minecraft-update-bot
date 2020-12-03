@@ -1,7 +1,7 @@
+import {fork} from 'child_process';
 import {config} from 'dotenv';
 import {existsSync} from 'fs';
 import {versionFile} from './helpers/constants';
-import {loop} from './helpers/functions';
 import {getLatestVersion, writeVersionToFile} from './helpers/utils';
 
 (async () => {
@@ -13,5 +13,13 @@ import {getLatestVersion, writeVersionToFile} from './helpers/utils';
     writeVersionToFile(await getLatestVersion(), versionFile);
   }
 
-  await loop();
+  const child = fork(`${__dirname}/helpers/functions.js`, {
+    detached: false,
+    env: {...process.env, FORK: '1'},
+  });
+
+  process.on('SIGINT', () => {
+    console.info('Stopping bot...');
+    child.kill(0);
+  });
 })();

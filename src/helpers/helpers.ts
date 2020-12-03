@@ -1,3 +1,4 @@
+const fetch = require('node-fetch');
 import {JSDOM} from 'jsdom';
 import {VersionManifest} from '../types';
 import {FIVE_MINUTES} from './constants';
