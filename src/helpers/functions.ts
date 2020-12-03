@@ -12,7 +12,7 @@ import {
 import {emojify} from 'node-emoji';
 import {sleep} from './helpers';
 
-export async function loop() {
+export async function loop(exitCondition?: () => boolean) {
   let latestVersion = (await readVersionFromFile(versionFile)) as Version;
   let oscilationTime = 0; // Don't wait on first execution.
 
@@ -20,6 +20,10 @@ export async function loop() {
 
   for (;;) {
     await sleep(oscilationTime);
+
+    if (exitCondition && exitCondition()) {
+      break;
+    }
 
     const currentVersion = await getLatestVersion();
 
