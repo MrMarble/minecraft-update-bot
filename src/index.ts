@@ -1,8 +1,8 @@
 import {config} from 'dotenv';
-import { existsSync } from 'fs';
-import { versionFile } from './helpers/constants';
-import {getLatestVersion, loop} from './helpers/functions';
-import { writeVersionToFile } from './helpers/utils';
+import {existsSync} from 'fs';
+import {versionFile} from './helpers/constants';
+import {loop} from './helpers/functions';
+import {getLatestVersion, writeVersionToFile} from './helpers/utils';
 
 (async () => {
   config(); // Load .env file

@@ -1,53 +1,18 @@
 import fetch from 'node-fetch';
-import {FIVE_MINUTES} from './constants';
-import {Version, VersionManifest, VersionType} from '../types';
+import {MSG_SIZE, versionManifest} from './constants';
+import {
+  Changelog,
+  Feature,
+  Version,
+  VersionManifest,
+  VersionType,
+} from '../types';
 import {JSDOM} from 'jsdom';
 import {get, emojify} from 'node-emoji';
 import {readFile, writeFile} from 'fs';
 import {promisify} from 'util';
-
-/**
- * Makes a GET request
- * @param url url to fetch
- * @param tries maximum number of tries before failure
- */
-export async function doRequest(
-  url: string,
-  tries = 3
-): Promise<JSDOM | VersionManifest | false> {
-  if (tries <= 0) {
-    console.error(`Error fetching ${url}. No more tries`);
-    return false;
-  }
-  const response = await fetch(url);
-  if (!response.ok) {
-    console.warn(`Error fetching ${url}. Code: ${response.status}`);
-    console.warn(`Retrying in ${FIVE_MINUTES / 1000} seconds.`);
-    await sleep(FIVE_MINUTES);
-    return doRequest(url, --tries);
-  }
-  switch (response.headers.get('Content-Type')) {
-    case 'application/json':
-      return response.json();
-    case 'text/html;charset=utf-8':
-      return new JSDOM(await response.text(), {
-        contentType: 'text/html;charset=utf-8',
-      });
-    default:
-      console.error(
-        `Error detecting Content-Type: ${response.headers.get('Content-Type')}`
-      );
-      return false;
-  }
-}
-
-/**
- * Waits for a desired ammount of time
- * @param ms milliseconds to wait
- */
-export function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+import dayjs = require('dayjs');
+import {doRequest} from './helpers';
 
 /**
  * Returns the possible url of a minecraft version changelog
@@ -175,4 +140,102 @@ export async function readVersionFromFile(
 
 export async function writeVersionToFile(version: Version, path: string) {
   await promisify(writeFile)(path, JSON.stringify(version));
+}
+
+export async function getChangelog({id, type}: Version): Promise<Changelog> {
+  const changelog: Changelog = [];
+
+  const dom = (await doRequest(getChangelogURL({type, id} as Version))) as
+    | JSDOM
+    | false;
+  if (dom === false) {
+    return changelog;
+  }
+
+  const {document} = dom.window;
+
+  const features = document.querySelectorAll('.article-paragraph h1');
+
+  features.forEach(element => {
+    if (element.textContent) {
+      const headers = nextUntil(element, 'h1', 'h2,h3');
+      let changes: Array<Feature | string> = [];
+      if (headers.length > 0) {
+        changes = headers
+          .map(e => {
+            const elements = getListElements(e);
+            if (elements !== false && e.textContent) {
+              return {name: sanitize(e.textContent), content: elements};
+            }
+            return undefined;
+          })
+          .filter(e => e !== undefined) as Array<Feature>;
+      } else {
+        const elements = getListElements(element);
+        if (elements !== false && sanitize(element.textContent)) {
+          changes = elements;
+        }
+      }
+      changelog.push({name: sanitize(element.textContent), content: changes});
+    }
+  });
+  return changelog;
+}
+
+export async function getLatestVersion(): Promise<Version> {
+  const json = (await doRequest(versionManifest)) as VersionManifest;
+  const version: Version = {
+    type: json.versions[0].type,
+    id: json.versions[0].id,
+    time: dayjs(json.versions[0].releaseTime),
+    changelogURL: getChangelogURL({
+      type: json.versions[0].type,
+      id: json.versions[0].id,
+    } as Version),
+  };
+
+  return version;
+}
+
+export function formatChangelog(cl: Changelog, max?: number): string {
+  const msg: Array<string> = [];
+  for (const feature of cl) {
+    if (feature.name.startsWith('Get the')) continue;
+    msg.push(...formatFeature(feature, max));
+  }
+
+  if (msg.join('\n').length > MSG_SIZE) {
+    if (max === undefined) max = 4;
+    return formatChangelog(cl, --max);
+  }
+  return msg.join('\n');
+}
+
+function formatFeature(feat: Feature, max?: number): Array<string> {
+  const msg: Array<string> = [];
+  msg.push(''); // Empty line
+  msg.push(emojize(feat.name.bold()));
+  for (const change of feat.content) {
+    if (max && feat.content.indexOf(change) >= max) {
+      feat.content.indexOf(change) === max && msg.push('... and more!');
+      continue;
+    }
+    if (typeof change === 'string') {
+      msg.push(`- ${change}`);
+      continue;
+    }
+    msg.push(...formatFeature(change, max));
+  }
+  return msg;
+}
+
+function getListElements(preceding: Element): Array<string> | false {
+  const elements = nextUntil(preceding, 'h2,h3,h1', 'ul');
+  if (elements.length === 0) {
+    return false;
+  }
+  const items = elements[0].querySelectorAll('li');
+  const data: Array<string> = [];
+  items.forEach(el => el.textContent && data.push(sanitize(el.textContent)));
+  return data;
 }
