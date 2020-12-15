@@ -9,7 +9,7 @@ import {
 } from '../types';
 import {JSDOM} from 'jsdom';
 import {get, emojify} from 'node-emoji';
-import {readFile, writeFile} from 'fs';
+import {readFile, statSync, writeFile} from 'fs';
 import {promisify} from 'util';
 import dayjs = require('dayjs');
 import {doRequest} from './helpers';
@@ -209,6 +209,11 @@ export function formatChangelog(cl: Changelog, max?: number): string {
     return formatChangelog(cl, --max);
   }
   return msg.join('\n');
+}
+
+export function isEmpty(path: string): boolean {
+  const stats = statSync(path);
+  return stats.size === 0;
 }
 
 function formatFeature(feat: Feature, max?: number): Array<string> {
