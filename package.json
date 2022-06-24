@@ -42,7 +42,7 @@
   "dependencies": {
     "dayjs": "^1.9.6",
     "dotenv": "^8.2.0",
-    "jsdom": "^16.4.0",
+    "jsdom": "^16.5.0",
     "node-emoji": "^1.10.0",
     "node-fetch": "^2.6.1"
   }
